@@ -15,6 +15,7 @@ lastState = 0
 lastTime = 0
 reps = 0
 switch = False
+mode = 'Squat'
 cv2.namedWindow('MediaPipe Pose',0)
 # For webcam input:
 cap = cv2.VideoCapture(0)
@@ -48,17 +49,24 @@ with mp_pose.Pose(
     if results.pose_landmarks:
         for id, lm in enumerate(results.pose_landmarks.landmark):
             poseDict[id] = (int(lm.x*w),int(lm.y*h))
-        lastState,lastTime,reps,switch = headTiltDet(poseDict,lastState,lastTime,reps,switch)
-        shoulder,nose,middle,angle = HeadTilePassLineCalculator(poseDict)
-        cv2.line(image,shoulder,nose,(255,0,255),1)
-        cv2.line(image,shoulder,middle,(255,0,255),1)
+        if mode == 'HeadTilt':
+          lastState,lastTime,reps,switch = headTiltDet(poseDict,lastState,lastTime,reps,switch)
+          HeadTilePassLineCalculator(image,poseDict)
+        elif mode == 'ArmRaise':
+          lastState,lastTime,reps,switch = frontArmDet(poseDict,lastState,lastTime,reps,switch)
+          FrontArmRaisePassLineCalculator(image,poseDict)
+        elif mode == 'Squat':
+          lastState,lastTime,reps,switch = squatDet(poseDict,lastState,lastTime,reps,switch)
+          SquatPassLineCalculator(image,poseDict)
+          
 
-    cv2.putText(image,'angle: '+str(angle)+'degree',(200,50),cv2.FONT_HERSHEY_COMPLEX,1,(255,0,255),1)
+
+
     cv2.putText(image,'reps:'+str(reps),(500,50),cv2.FONT_HERSHEY_COMPLEX,1,(255,0,255),2)
     cv2.putText(image,'state:'+str(lastState),(500,100),cv2.FONT_HERSHEY_COMPLEX,1,(255,0,255),2)
 
 
-    if reps%3 == 0 and reps != 0:
+    if reps%2 == 0 and reps != 0:
         cv2.rectangle(image,(0,0),(175,100),(0,255,0),cv2.FILLED)
     else:
         cv2.rectangle(image,(0,0),(175,100),(0,0,255),cv2.FILLED)
@@ -68,4 +76,10 @@ with mp_pose.Pose(
       break
     elif key == 13:
         reps = 0
+    elif key == ord('q'):
+      mode = 'Squat'
+    elif key == ord('w'):
+      mode = 'ArmRaise'
+    elif key == ord('e'):
+      mode = 'HeadTilt'
 cap.release()

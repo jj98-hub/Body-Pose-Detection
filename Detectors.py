@@ -1,5 +1,6 @@
 import time
 import math
+import cv2 
 def squatDet(landmarksDictionary,previousState,previousTime,count,flag):
     if landmarksDictionary != {}:
         knee_y = landmarksDictionary[25][1]
@@ -150,7 +151,7 @@ def headTiltDet(landmarksDictionary,previousState,previousTime,count,flag):
 
 
 
-def SquatPassLineCalculator(landmarksDictionary):
+def SquatPassLineCalculator(image,landmarksDictionary):
     if landmarksDictionary != {}:
         knee_y = landmarksDictionary[25][1]
         hip_y = landmarksDictionary[23][1]
@@ -160,12 +161,10 @@ def SquatPassLineCalculator(landmarksDictionary):
         L_ankle_y = landmarksDictionary[28][1]
         passPoint = int(knee_y - (ankle_y - knee_y)*0.5)
         L_passPoint = int(knee_y - (ankle_y - knee_y)*0.5)
-        return L_passPoint,passPoint
-    else:
-        return None
+        cv2.line(image,(0,passPoint),(image.shape[1],passPoint),(255,0,255),1)
 
 
-def FrontArmRaisePassLineCalculator(landmarksDictionary):
+def FrontArmRaisePassLineCalculator(image,landmarksDictionary):
     if landmarksDictionary != {}:
         L_shoulder_x = landmarksDictionary[12][0]
         R_shoulder_x = landmarksDictionary[11][0]
@@ -174,12 +173,13 @@ def FrontArmRaisePassLineCalculator(landmarksDictionary):
         mouth_middle = int((L_mouth_y+R_mouth_y)/2)
         R_passPoint = int(R_shoulder_x)
         L_passPoint = int(L_shoulder_x)
-        return L_passPoint,R_passPoint,mouth_middle
-    else:
-        return None
+        cv2.line(image,(0,mouth_middle),(image.shape[1],mouth_middle),(255,0,255),1)
+        cv2.line(image,(L_passPoint,0),(L_passPoint,image.shape[0]),(255,0,255),1)
+        cv2.line(image,(R_passPoint,0),(R_passPoint,image.shape[0]),(255,0,255),1)
 
 
-def HeadTilePassLineCalculator(landmarksDictionary):
+
+def HeadTilePassLineCalculator(image,landmarksDictionary):
     if landmarksDictionary != {}:
         L_shoulder_x = landmarksDictionary[11][0]
         L_shoulder_y = landmarksDictionary[11][1]
@@ -192,9 +192,13 @@ def HeadTilePassLineCalculator(landmarksDictionary):
         middle_line_x = shoulder_middle_x
         middle_line_y = nose_y
         head_tilt_angle = angleCalculator(shoulder_middle_x,shoulder_middle_y,nose_x,nose_y,middle_line_x,middle_line_y)
-        return (int(shoulder_middle_x),int(shoulder_middle_y)),(int(nose_x),int(nose_y)),(int(middle_line_x),int(middle_line_y)),int(head_tilt_angle)
-    else:
-        return None
+        shoulder = (int(shoulder_middle_x),int(shoulder_middle_y))
+        nose = (int(nose_x),int(nose_y))
+        middle = (int(middle_line_x),int(middle_line_y))
+        angle = int(head_tilt_angle)
+        cv2.putText(image,'angle: '+str(angle)+'degree',(200,50),cv2.FONT_HERSHEY_COMPLEX,1,(255,0,255),1)
+        cv2.line(image,shoulder,nose,(255,0,255),1)
+        cv2.line(image,shoulder,middle,(255,0,255),1)
 
 
 def angleCalculator(mx,my,bx,by,cx,cy):
@@ -204,3 +208,5 @@ def angleCalculator(mx,my,bx,by,cx,cy):
     mcAbs = ((mx-cx)**2+(my-cy)**2)**0.5 
     angle = math.degrees(math.acos((mb[0]*mc[0]+mb[1]*mc[1])/(mbAbs*mcAbs)))
     return angle
+
+
